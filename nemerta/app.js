@@ -35,22 +35,33 @@ function dispatchSlaveCt(){
 }
 
 function dispatchPlay(){
+	let num = 0;
 	slaveSockets.forEach(socket => {
-		socket.emit('play', {});
+		setTimeout(function(){
+			socket.emit('play', {num: num});
+		}, num * 1000);
+		num++;
 	});
+	// slaveSockets.forEach(socket => {
+	// 	socket.emit('play', {});
+	// });
 }
 
 io.on('connection', function (socket) {
+
 	socket.emit('whoareyou', { message: 'whoareyou' });
+
+	socket.on('disconnect', function(msg){
+		console.log('disconnect ' + msg);
+		//TODO: Remove slave from array
+		slaveCt--;
+		dispatchSlaveCt();
+	});
+	
 	socket.on('slave', function (data) {
 
 		slaveSockets.push(socket);
-		socket.on('disconnect', function(msg){
-			console.log('disconnect ' + msg);
-			//TODO: Remove slave from array
-			slaveCt--;
-			dispatchSlaveCt();
-		});
+		socket.emit('youare', { iam: slaveSockets.length});
 
 		slaveCt++;
 		dispatchSlaveCt();

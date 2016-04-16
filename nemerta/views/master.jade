@@ -12,7 +12,7 @@ html
 
 		script(src="/bootstrap/js/bootstrap.min.js")
 
-		script(src="/socket.io.js")
+		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 		script(src="/master.js")
 	body(onload="pageLoaded()")
 		div(class='jumbotron vertical-center')
@@ -22,7 +22,7 @@ html
 
 				img(id='throbber', src='/knife-throbber.gif')
 				br
-				
+
 				p(id='slaveCt')
 					|clients: 0
 				button(id='start')

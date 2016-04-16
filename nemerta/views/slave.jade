@@ -12,7 +12,7 @@ html
 
 		script(src="/bootstrap/js/bootstrap.min.js")
 
-		script(src="/socket.io.js")
+		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 		script(src="/slave.js")
 	body(onload="pageLoaded()")
 		div(class='jumbotron vertical-center')
@@ -22,5 +22,7 @@ html
 
 				img(id='fingerprint', src='/fingerprint.png')
 				img(id='throbber-loaded', src='/virus-throbber.gif')
+				p(id='iam')
+					|?
 				p(id='slaveCt')
 					|clients: 0
