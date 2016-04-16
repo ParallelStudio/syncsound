@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- note: for support on older browsers, you will need to load es5-shim and es6-shim -->
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.0.5/es5-shim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.23.0/es6-shim.min.js"></script>-->
+  <script src="/js/sound.js"></script>
+  <script src="/timesync/timesync.js"></script>
+  <style>
+  #clockVis{
+    display:block;
+    width:200px;
+    height:200px;
+    background-color:red;
+  }
+  </style>
+</head>
+<body>
+  <div id="timeValue"></div>
+  <div id="timeOffset"></div>
+  <div id="clockVis"></div>
+
+  <script>
+    // create a timesync instance
+    var ts = timesync.create( {
+      server: '/timesync',
+      interval: 10000
+    });
+
+    // get notified on changes in the offset
+    ts.on('change', function (offset) {
+    document.getElementById("timeOffset").innerHTML = 'changed offset: ' + offset + ' ms';
+    });
+
+    // get synchronized time
+    setInterval(function () {
+      var now = new Date(ts.now());
+      document.getElementById("timeValue").innerHTML = 'now: ' + now.toISOString() + ' ms';
+    }, 100);
+
+    var lastSeconds = 0;
+    function loop() {
+      var now = new Date(ts.now()).getSeconds();
+      if(now != lastSeconds){
+        if(now % 2 == 0) {
+          document.getElementById("clockVis").style.backgroundColor = "red";
+        } else {
+          document.getElementById("clockVis").style.backgroundColor = "white";
+        }
+        lastSeconds = now;
+        if(soundStarted){
+          sound.getSound("tick").start(1);
+        }
+      }
+      window.requestAnimationFrame(loop);
+    }
+    loop();
+
+    var soundStarted = false;
+    
+    sound.initialize(function() {
+      
+      if ('ontouchstart' in window) {
+        document.body.addEventListener("touchstart", function(e) {
+          //document.body.style.backgroundColor = 'blue';
+          if(soundStarted){
+          }
+          else {
+            soundStarted = true;
+            sound.getSound("tick").start(1);
+          }
+        });
+      } else {
+        soundStarted = true;
+      }
+    });
+
+  </script>
+</body>
+</html>
