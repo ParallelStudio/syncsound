@@ -1,0 +1,29 @@
+html
+	head
+		title= title
+		script(src="//code.jquery.com/jquery-1.12.0.min.js")
+
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		link(rel="stylesheet", href="/bootstrap/css/bootstrap-responsive.css")
+		link(rel="stylesheet", href="/bootstrap/css/bootstrap.min.css")
+
+		//- link(rel="stylesheet", href="/bootstrap/css/bootstrap-theme.min.css")
+		link(rel="stylesheet", href="/nemerta.css")
+
+		script(src="/bootstrap/js/bootstrap.min.js")
+
+		script(src="/socket.io.js")
+		script(src="/master.js")
+	body(onload="pageLoaded()")
+		div(class='jumbotron vertical-center')
+			div(class='container')
+				h1(id='top')
+					|setup
+
+				img(id='throbber', src='/knife-throbber.gif')
+				br
+				
+				p(id='slaveCt')
+					|clients: 0
+				button(id='start')
+					|start
