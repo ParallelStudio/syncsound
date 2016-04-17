@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>delta_echo</title>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/normalize/3.0.1/normalize.min.css">
+  <script src="/primus/primus.js"></script>
+  <style>
+    body { 
+      padding: 50px 
+    }
+    #output { 
+      list-style: none;
+    }
+    button { 
+      height: 100px; 
+      min-width: 100px; 
+      width: 30%; 
+      border-radius: 5px; 
+      border: 0; 
+      background: #444; 
+      color: #FFF; 
+      padding: 6px; 
+      margin-bottom: 1em; 
+    }
+    .needs_adjustment{
+      background-color: red; 
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <button id="play">play</button>
+  <button id="pause">pause</button>
+  <button id="sync">sync</button>
+  <br />
+  current_time:<input type="text" id="current_time" />
+
+  <ol id="output" readonly></ol>
+
+  <script>
+    var audio = new Audio('tick.mp3');
+    var tvod = new Audio('tvod.mp3');
+
+    var output = document.getElementById('output')
+      , play = document.getElementById('play')
+      , pause = document.getElementById('pause')
+      , current_time = document.getElementById('current_time')
+      , sync = document.getElementById('sync')
+      , is_player = false
+      , offset = 0
+      , est_offset = 0
+      , myInterval
+      , needs_adjustment = false
+      , offset_delta = 0;
+
+    var primus = new Primus({ use_clock_offset: true });
+
+    //
+    // listen for incoming data and log it.
+    //
+
+    primus.on('data', function received(data) {
+      
+      if(data.msg.match(/play/)){
+        if(!is_player && tvod.paused){
+          // tvod.play();
+          // start_interval();
+        }
+      }else if(data.msg.match(/sync/)){
+        if(!is_player){
+          
+          offset = parseFloat(data.offset);
+          est_offset = offset + data.latency/1000 + this.latency/1000;
+          offset_delta = (est_offset / tvod.currentTime );
+          if(offset_delta < 1){
+            offset_delta += 1;
+          }
+          // console.log(tvod.currentTime, est_offset, offset_delta );
+          //set the play head to the calculated position.
+          if( offset_delta > 1.009 && est_offset < tvod.currentTime ){
+            // tvod.pause();
+            console.log('NEEDS OFFSET:',tvod.currentTime, est_offset, est_offset - tvod.currentTime  );
+            needs_adjustment = true;
+            tvod.currentTime = est_offset;
+          }else{
+            needs_adjustment = false;
+          }
+
+          if(tvod.paused){
+            // tvod.currentTime = est_offset;
+            tvod.play();
+            start_interval();
+          }
+        } 
+      }else if(data.msg.match(/pause/)){
+        clearInterval(myInterval);
+        tvod.pause();
+      }
+
+      var log = document.createElement("li");
+      log.innerHTML = data.offset
+                      +' '+data.msg
+                      +' '+data.spark_id
+                      +' '+data.latency
+                      +' '+this.latency
+                      +' '+offset_delta;
+      if(needs_adjustment){
+        log.classList.add("needs_adjustment");
+      }
+      output.insertBefore(log, output.firstChild);
+
+    });
+
+    play.onclick=function(){
+      if(tvod.paused){
+        is_player = true;
+        primus.write({msg: 'play'});
+        tvod.play();
+        start_interval();
+        play.innerHTML = "stop";
+      }else{
+        is_player = false;
+        clearInterval(myInterval);
+        tvod.pause();
+        tvod.currentTime = 0;
+        play.innerHTML = "play";
+      }
+      
+    };
+    pause.onclick=function(){
+      is_player = false;
+      clearInterval(myInterval);
+      primus.write({msg: 'pause'});
+      tvod.pause();
+      play.innerHTML = "play";
+
+    };
+    sync.onclick=function(){
+      tvod.currentTime = est_offset;
+    }
+
+    function start_interval(){
+      console.log("STARTING INTERVAL!");
+      myInterval = setInterval(function(){
+        if(is_player){
+          primus.write({msg: 'sync', offset: tvod.currentTime});
+        }
+        current_time.value = tvod.currentTime;
+      }, 500);
+    }
+
+  </script>
+</body>
+</html>
