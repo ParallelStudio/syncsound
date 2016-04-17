@@ -13,15 +13,15 @@ function pageLoaded(){
 		console.log('slaveCt ' + data.slaves);
 		$('#slaveCt').text('clients: ' + data.slaves);
 	});
+
+	$('#start').on('click', function(){
+		console.log("start clicked");
+		socket.emit('play', {});
+	});
+
 	socket.on('whoareyou', function(data){
 		console.log("Server said: " + data.message);
 		socket.emit('master', {});
 		$('#top').text('ready');
-
-		$('#start').on('click', function(){
-			console.log("start clicked");
-			socket.emit('play', {});
-		});
 	});
 }
-

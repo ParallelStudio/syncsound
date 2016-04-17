@@ -26,8 +26,8 @@ var masterSocket = null;
 var slaveSockets = [];
 
 function dispatchSlaveCt(){
-	slaveSockets.forEach(socket => {
-		socket.emit('slaveCt', { slaves: slaveCt });
+	slaveSockets.forEach(slave => {
+		slave.socket.emit('slaveCt', { slaves: slaveCt });
 	});
 	if(masterSocket){
 		masterSocket.emit('slaveCt', { slaves: slaveCt });
@@ -35,16 +35,25 @@ function dispatchSlaveCt(){
 }
 
 function dispatchPlay(){
-	let num = 0;
-	slaveSockets.forEach(socket => {
+	slaveSockets.forEach(slave => {
 		setTimeout(function(){
-			socket.emit('play', {num: num});
-		}, num * 1000);
-		num++;
+			console.log("Playing " + slave.num);
+			slave.socket.emit('play', {num: slave.num});
+		}, slave.num * 1000);
 	});
-	// slaveSockets.forEach(socket => {
-	// 	socket.emit('play', {});
-	// });
+}
+
+function removeSlave(socket){
+	//Remove slave from array
+	var index = -1;
+	for(var i = 0; i < slaveSockets.length; i++){
+		if(slaveSockets[i].socket == socket){
+			index = i;
+		}
+	}
+	console.log("Removing client at index " + index);
+	slaveSockets.splice(index, 1);
+	slaveCt--;
 }
 
 io.on('connection', function (socket) {
@@ -53,14 +62,13 @@ io.on('connection', function (socket) {
 
 	socket.on('disconnect', function(msg){
 		console.log('disconnect ' + msg);
-		//TODO: Remove slave from array
-		slaveCt--;
+		removeSlave(socket);
 		dispatchSlaveCt();
 	});
-	
+
 	socket.on('slave', function (data) {
 
-		slaveSockets.push(socket);
+		slaveSockets.push({ socket: socket, num: slaveSockets.length+1 });
 		socket.emit('youare', { iam: slaveSockets.length});
 
 		slaveCt++;

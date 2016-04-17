@@ -13,42 +13,50 @@ function pageLoaded(){
 		$('#fingerprint').hide();
 	}
 
-	for(i=0; i < 10; i++){
-		loadAudio(i);
+	for(var i=0; i < 10; i++){
+		var x = function(num){
+			return function(){
+				return loadAudio(num);
+			}
+		}
+		setTimeout(x(i), 100 * i);
+		// loadAudio(i);
 	}
 }
 
 function loadAudio(num){
 	console.log("Loading audio " + num);
-	$('#top').text('loading');
+	$('#top').text('loading ' + num );
 	var isIos = /(ipod|iphone|ipad)/.test(navigator.userAgent.toLowerCase());
 	var audiopreloadevent = isIos ? "progress" : "loadeddata";
-	$(audios[num]).on(audiopreloadevent, function(){
-		audioLoaded(num);
-	});
+	$(audios[num]).on(audiopreloadevent, audioLoaded(num));
 	audios[num].src = '/counts/long/' + (num+1) + '.mp3';
 }
 
 var numLoaded = 0;
 function audioLoaded(num){
-	numLoaded++;
-	if(numLoaded != 10){
-		return;
-	}
-	$('#top').text('loaded');
-	if(hasTouch()){
-		$('#top').text('touch me');
-		$('#fingerprint').on('touchstart', function () {
-			$('#top').text('connecting');
-		    $('#fingerprint').hide();
-		    $('#throbber-loaded').show();
-		    audios[num].play();
-		    audios[num].pause();
-		    setupSocket();
-		});
-	}
-	else {
-		setupSocket();
+	return function(){
+		$('#top').text('done ' + num);
+
+		numLoaded++;
+		if(numLoaded != 10){
+			return;
+		}
+		$('#top').text('loaded ' + num);
+		if(hasTouch()){
+			$('#top').text('touch me');
+			$('#fingerprint').on('touchstart', function () {
+				$('#top').text('connecting');
+			    $('#fingerprint').hide();
+			    $('#throbber-loaded').show();
+			    audios[num].play();
+			    audios[num].pause();
+			    setupSocket();
+			});
+		}
+		else {
+			setupSocket();
+		}
 	}
 }
 
@@ -74,20 +82,25 @@ function setupSocket(){
 	});
 
 	socket.on('play', function(data){
+		$('#top').text('OMFG ' + data.num);
 		console.log("Server wants me to play...");
-		$('#top').text('playing');
+		// $('#top').text(JSON.stringify(data));
+		doPlay(data.num);
+	});
+}
 
-		var delay = 0;
-		if(!hasTouch()){
-			delay = 200;
-		}
-		setTimeout(function(){
-			audios[data.num].play();
-		}, delay);
+function doPlay(num){
+	$('#top').text('playing ' + num);
+	var delay = 0;
+	if(!hasTouch()){
+		delay = 200;
+	}
+	setTimeout(function(){
+		audios[num-1].play();
+	}, delay);
 
-		$(audio).on('ended', function(){
-			$('#top').text('waiting');
-		});
+	$(audios[num-1]).on('ended', function(){
+		$('#top').text('waiting');
 	});
 }
 
